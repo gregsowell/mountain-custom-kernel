@@ -1,6 +1,6 @@
 ---
 - name: Perform mountain custom kernel configuration
-  hosts: mountain-hosts
+  hosts: lts_custom_kernel
   gather_facts: false
   become: true
   vars:

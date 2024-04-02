@@ -1,6 +1,6 @@
 ---
 - name: Update all packages
-  hosts: mountain-hosts
+  hosts: lts_custom_kernel
   gather_facts: false
   become: true
   vars:

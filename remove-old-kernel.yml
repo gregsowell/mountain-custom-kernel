@@ -1,6 +1,6 @@
 ---
 - name: Remove old 5.14.x kernels
-  hosts: mountain-hosts
+  hosts: lts_custom_kernel
   gather_facts: false
   become: true
   vars:
