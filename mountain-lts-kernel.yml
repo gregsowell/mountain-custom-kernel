@@ -1,0 +1,125 @@
+---
+- name: Perform mountain custom kernel configuration
+  hosts: mountain-hosts
+  gather_facts: false
+  become: true
+  vars:
+    # # This is the version that the CIQ binary should at a minimum be at
+    # # This must be in quotes as it compares strings
+    # req_ciq_version: "1.0.8"
+  
+    # This is the access key created in mountain to authenticate the subscription
+    # This key should be maintained securely in a vault or securely within Ascender
+    mtn_access_key: xzy123
+
+    # #files to be manually deleted
+    # remove_files: 
+    #   - /etc/yum.repos.d/ciq.repo
+    #   - /etc/ciq.cfg
+
+    # # repo file for parsing to reenable packages
+    # repo_file: /etc/yum.repos.d/ciq.repo
+
+  tasks:
+  - name: See if CIQ Mountain Access Token environment variable is set from Ascender
+    set_fact:
+      mtn_env_key: "{{ lookup('ansible.builtin.env', 'MOUNTAIN_TOKEN') | default(omit)}}"
+    run_once: true
+    delegate_to: localhost
+
+  - name: If the Ascender token was present, then reset the mtn_access_key variable
+    when: mtn_env_key is defined and mtn_env_key != ""
+    set_fact:
+      mtn_access_key: "{{ mtn_env_key }}"
+    run_once: true
+    delegate_to: localhost
+
+  # - name: Check which version of ciq binary is present
+  #   ansible.builtin.shell: ciq -v | awk '{print $3 }' | sed 's/^v//' | cut -d'-' -f1
+  #   register: ciq_version
+
+  # - name: find all of the repo sections from the repo file
+  #   ansible.builtin.shell: "cat {{ repo_file }} | grep -o '\\[.*\\]' | tr -d '[]'"
+  #   register: section_list
+
+  # - name: check if backup of repo file exists
+  #   ansible.builtin.stat:
+  #     path: "{{ repo_file }}.old"
+  #   register: repo_check
+
+  # - name: make backup of repo file if it doesn't exist
+  #   when: not repo_check.stat.exists
+  #   ansible.builtin.shell: "cat {{ repo_file }} > {{ repo_file }}.old"
+
+  # - name: copy repo file to local ansible executor for parsing.  Saves to playbookdir/hostname/fullOrigPathToFile
+  #   ansible.builtin.fetch:
+  #     src: "{{ repo_file }}.old"
+  #     dest: "{{ playbook_dir }}"
+
+
+  # ##Block start - remove old ciq binary if too old
+  # - name: Block to remove old binary and repo
+  #   when: ciq_version.stdout is defined and ciq_version.stdout is version(req_ciq_version, '<')
+  #   block:
+  #   - name: Remove old binary and release
+  #     ansible.builtin.dnf:
+  #       name:
+  #         - ciq-public-release
+  #       state: absent
+  #     ignore_errors: true
+    
+  #   - name: Remove files manually
+  #     ansible.builtin.file:
+  #       path: "{{ item }}"
+  #       state: absent
+  #     loop: "{{ remove_files }}"
+
+  # ##Block stop - remove old ciq binary if too old
+      
+  ##Block start - install new ciq binary
+  - name: Block to install new repo/binary and add keys
+    block:
+
+    - name: Install ciq repos
+      ansible.builtin.dnf:
+        name:
+          - "https://repository.ciq.com/ciq-public-release.rpm"
+        disable_gpg_check: true
+        state: present
+
+    - name: Install ciq binary
+      ansible.builtin.dnf:
+        name:
+          - mtn
+        state: latest
+
+    - name: Enroll in the CIQ CLI using access key
+      ansible.builtin.shell: "mtn enroll {{ mtn_access_key }}"
+
+    - name: Enable the subscription to 9 kernel
+      ansible.builtin.shell: mtn dnf enable upstream-kernels-9 --repo lts6.1
+
+    - name: Upgrade kernel
+      ansible.builtin.shell: dnf -y upgrade kernel 
+
+    - name: Reboot server to accept new kernel
+      ansible.builtin.reboot:
+
+    - name: Pause for 5 minutes to build app cache
+      ansible.builtin.pause:
+        seconds: 30
+
+    # - name: file directory build.  This is used to lookup the ciq.repo files from each server for use in next task.
+    #   ansible.builtin.set_fact:
+    #     old_repo_file: "{{ playbook_dir }}/{{ inventory_hostname }}/{{ repo_file }}.old"
+
+    # - name: Enable the subscription by looping through old repo and enabeling things that were previously enabled
+    #   when: lookup('ansible.builtin.ini', 'enabled', section=item, file=old_repo_file) == "1"
+    #   ansible.builtin.shell: "mtn dnf enable {{ item }}"
+    #   loop: "{{ section_list.stdout_lines }}"
+  ##Block stop - install new ciq binary
+
+#  - name: Update all packages on the system
+#    ansible.builtin.dnf:
+#      name: "*"
+#      state: latest

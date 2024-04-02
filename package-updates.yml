@@ -1,0 +1,11 @@
+---
+- name: Update all packages
+  hosts: mountain-hosts
+  gather_facts: false
+  become: true
+  vars:
+  tasks:
+    - name: Perform updates on all hosts
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest

@@ -1,0 +1,9 @@
+---
+- name: Remove old 5.14.x kernels
+  hosts: mountain-hosts
+  gather_facts: false
+  become: true
+  vars:
+  tasks:
+    - name: Remove old kernels
+    ansible.builtin.shell: 'dnf -y remove "kernel*5.14*"'
