@@ -105,9 +105,9 @@
     - name: Reboot server to accept new kernel
       ansible.builtin.reboot:
 
-    - name: Pause for 5 minutes to build app cache
+    - name: Pause for 5 seconds
       ansible.builtin.pause:
-        seconds: 30
+        seconds: 5
 
     # - name: file directory build.  This is used to lookup the ciq.repo files from each server for use in next task.
     #   ansible.builtin.set_fact:

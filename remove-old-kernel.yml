@@ -6,4 +6,4 @@
   vars:
   tasks:
     - name: Remove old kernels
-    ansible.builtin.shell: 'dnf -y remove "kernel*5.14*"'
+      ansible.builtin.shell: 'dnf -y remove "kernel*5.14*"'
