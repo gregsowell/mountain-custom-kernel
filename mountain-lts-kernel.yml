@@ -97,7 +97,7 @@
       ansible.builtin.shell: "mtn enroll {{ mtn_access_key }}"
 
     - name: Enable the subscription to 9 kernel
-      ansible.builtin.shell: mtn dnf enable upstream-kernels-9 --repo lts6.1
+      ansible.builtin.shell: mtn dnf enable upstream-kernels-9 --repo lt6.1
 
     - name: Upgrade kernel
       ansible.builtin.shell: dnf -y upgrade kernel 
