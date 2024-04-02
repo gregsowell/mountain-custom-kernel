@@ -7,3 +7,5 @@
   tasks:
     - name: Remove old kernels
       ansible.builtin.shell: 'dnf -y remove "kernel*5.14*"'
+      register: removal_result
+      changed_when: removal_result.stderr != "No packages marked for removal."
