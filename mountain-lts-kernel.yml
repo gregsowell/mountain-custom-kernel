@@ -101,8 +101,11 @@
 
     - name: Upgrade kernel
       ansible.builtin.shell: dnf -y upgrade kernel 
+      changed_when: "'Nothing to do' not in upgrade_result.stdout"
+      register: upgrade_result
 
     - name: Reboot server to accept new kernel
+      when: upgrade_result.changed
       ansible.builtin.reboot:
 
     - name: Pause for 5 seconds
